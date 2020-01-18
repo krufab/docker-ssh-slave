@@ -1,23 +1,33 @@
 #!/usr/bin/env bats
 
-DOCKERFILE=Dockerfile
-JDK=8
 AGENT_IMAGE=jenkins-ssh-slave
 AGENT_CONTAINER=bats-jenkins-ssh-slave
 
-if [[ -z "${FLAVOR}" ]]
+REGEX='^([0-9]+)/(.+)$'
+
+if [[ ${FOLDER} =~ ${REGEX} ]] && [[ -d "${FOLDER}" ]]
 then
-  FLAVOR="debian"
-elif [[ "${FLAVOR}" = "jdk11" ]]
+  JDK="${BASH_REMATCH[1]}"
+  FLAVOR="${BASH_REMATCH[2]}"
+else
+  echo "Wrong folder format or folder does not exist: ${FOLDER}"
+  exit 1
+fi
+
+DOCKERFILE="${FOLDER}/Dockerfile"
+
+if [[ "${JDK}" = "11" ]]
 then
-  DOCKERFILE+="-jdk11"
-  JDK=11
   AGENT_IMAGE+=":jdk11"
   AGENT_CONTAINER+="-jdk11"
 else
-  DOCKERFILE+="-alpine"
-  AGENT_IMAGE+=":alpine"
-  AGENT_CONTAINER+="-alpine"
+  if [[ "${FLAVOR}" = "alpine*" ]]
+  then
+    AGENT_IMAGE+=":alpine"
+    AGENT_CONTAINER+="-alpine"
+  else
+    AGENT_IMAGE+=":latest"
+  fi
 fi
 
 load test_helpers
@@ -31,7 +41,7 @@ function teardown () {
 
 @test "[${FLAVOR}] build image" {
   cd "${BATS_TEST_DIRNAME}"/.. || false
-  docker build -t "${AGENT_IMAGE}" -f "${DOCKERFILE}" .
+  docker build -t "${AGENT_IMAGE}" -f "${DOCKERFILE}" "${JDK}"
 }
 
 @test "[${FLAVOR}] checking image metadata" {
@@ -119,7 +129,8 @@ function teardown () {
     --build-arg "gid=${TEST_GID}" \
     --build-arg "JENKINS_AGENT_HOME=${TEST_JAH}" \
     -t "${AGENT_IMAGE}" \
-    -f "${DOCKERFILE}" .
+    -f "${DOCKERFILE}" \
+    "${JDK}"
 
   docker run -d --name "${AGENT_CONTAINER}" -P "${AGENT_IMAGE}" "${PUBLIC_SSH_KEY}"
 

@@ -2,12 +2,12 @@ ROOT:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 IMAGE_NAME:=jenkins4eval/ssh-slave
 
 build:
-	docker build -t ${IMAGE_NAME}:latest .
-	docker build -t ${IMAGE_NAME}:alpine -f Dockerfile-alpine .
-	docker build -t ${IMAGE_NAME}jdk11   -f Dockerfile-jdk11  .
+	docker build -f 8/alpine3.6/Dockerfile -t ${IMAGE_NAME}:alpine 8/
+	docker build -f 8/stretch/Dockerfile   -t ${IMAGE_NAME}:latest 8/
+	docker build -f 11/stretch/Dockerfile  -t ${IMAGE_NAME}:jdk11  11/
 
 .PHONY: tests
 tests:
-	@bats tests/tests.bats
-	@FLAVOR=alpine bats tests/tests.bats
-	@FLAVOR=jdk11 bats tests/tests.bats
+	@FOLDER="8/alpine3.6" bats tests/tests.bats
+	@FOLDER="8/stretch"   bats tests/tests.bats
+	@FOLDER="11/stretch"  bats tests/tests.bats
