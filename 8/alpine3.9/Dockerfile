@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-FROM openjdk:8-jdk-alpine
+FROM openjdk:8-jdk-alpine:3.9
 LABEL MAINTAINER="Fabio Kruger <krufab.jobs@gmail.com>"
 
 ARG user=jenkins
